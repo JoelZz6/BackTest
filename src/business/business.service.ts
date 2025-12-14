@@ -13,8 +13,25 @@ export class BusinessService {
     private businessRepo: Repository<Business>,
     @InjectRepository(User)
     private userRepo: Repository<User>,
-    private mainDataSource: DataSource,
+    private mainDataSource: DataSource, // conexión principal
   ) {}
+
+  private async getBusinessDataSource(dbName: string) {
+    const isRender = process.env.RENDER === 'true'; // Variable de entorno en Render
+    const host = isRender
+      ? 'dpg-d4viah24d50c73829rp0-a' // host interno Render
+      : 'dpg-d4viah24d50c73829rp0-a.virginia-postgres.render.com'; // host externo local
+
+    return await new DataSource({
+      type: 'postgres',
+      host,
+      port: 5432,
+      username: 'admin',
+      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
+      database: dbName,
+      ssl: !isRender ? { rejectUnauthorized: false } : undefined,
+    }).initialize();
+  }
 
   async createBusiness(dto: CreateBusinessDto, user: User) {
     if (user.businessDbName) {
@@ -23,24 +40,15 @@ export class BusinessService {
 
     const dbName = `db_${user.id}`;
 
-    // 1. Crear la base de datos
+    // 1. Crear la base de datos principal
     await this.mainDataSource.query(`CREATE DATABASE "${dbName}"`);
 
     // 2. Conectar a la nueva base de datos
-    const businessDataSource = new DataSource({
-      type: 'postgres',
-      host: 'dpg-d4viah24d50c73829rp0-a',
-      port: 5432,
-      username: 'admin',
-      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
-      database: dbName,
-    });
-
-    const ds = await businessDataSource.initialize();
+    const ds = await this.getBusinessDataSource(dbName);
 
     try {
-      // 3. Crear tabla PRODUCT
-      const createProductsTable = `
+      // 3. Crear tablas
+      await ds.query(`
         CREATE TABLE product (
           id SERIAL PRIMARY KEY,
           name VARCHAR(255) NOT NULL,
@@ -51,14 +59,9 @@ export class BusinessService {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-
         CREATE INDEX idx_product_name ON product(name);
         CREATE INDEX idx_product_active ON product(is_active);
-      `;
 
-      await ds.query(createProductsTable);
-
-      const createLotTable = `
         CREATE TABLE lot (
           id SERIAL PRIMARY KEY,
           product_id INTEGER REFERENCES product(id) ON DELETE CASCADE,
@@ -67,12 +70,7 @@ export class BusinessService {
           remaining INTEGER NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-      `;
 
-      await ds.query (createLotTable);
-
-      // 4. Crear tabla SALE (¡ESTA ES LA QUE FALTABA!)
-      const createSaleTable = `
         CREATE TABLE sale (
           id SERIAL PRIMARY KEY,
           product_id INTEGER REFERENCES product(id) ON DELETE CASCADE,
@@ -81,14 +79,11 @@ export class BusinessService {
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-
         CREATE INDEX idx_sale_product ON sale(product_id);
         CREATE INDEX idx_sale_date ON sale(created_at DESC);
-      `;
+      `);
 
-      await ds.query(createSaleTable);
-
-      console.log(`Tablas creadas exitosamente en ${dbName} (product + sale)`);
+      console.log(`Tablas creadas exitosamente en ${dbName}`);
     } catch (error) {
       console.error('Error creando tablas:', error);
       await this.mainDataSource.query(`DROP DATABASE IF EXISTS "${dbName}"`);
@@ -97,15 +92,15 @@ export class BusinessService {
       await ds.destroy();
     }
 
-    // 5. Guardar negocio y actualizar usuario
-    const business = this.businessRepo.create({    
+    // 4. Guardar negocio y actualizar usuario
+    const business = this.businessRepo.create({
       name: dto.name,
       category: dto.category,
       description: dto.description,
-      phone: dto.phone,        // ← AQUÍ SÍ SE GUARDA EL TELÉFONO
+      phone: dto.phone,
       address: dto.address,
       ownerId: user.id,
-      dbName: dbName,
+      dbName,
     });
     await this.businessRepo.save(business);
 
@@ -132,12 +127,12 @@ export class BusinessService {
   }
 
   async getPublicInfo(dbName: string) {
-  const result = await this.mainDataSource.query(`
-    SELECT name, phone, description, category, address 
-    FROM business 
-    WHERE "dbName" = $1
-  `, [dbName]);
-
-  return result[0] || null; // ← DEVUELVE EL OBJETO DIRECTO
-}
+    const result = await this.mainDataSource.query(
+      `SELECT name, phone, description, category, address 
+       FROM business 
+       WHERE "dbName" = $1`,
+      [dbName],
+    );
+    return result[0] || null;
+  }
 }

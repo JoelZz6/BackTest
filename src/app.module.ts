@@ -10,16 +10,15 @@ import { ProductsModule } from './products/products.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'dpg-d4viah24d50c73829rp0-a',
-      port: 5432,
-      username: 'admin',  // Del docker-compose
-      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
-      database: 'octonet',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: false,  // Solo para dev, no en prod
-      ssl: { rejectUnauthorized: false },
-    }),
+  type: 'postgres',
+  url: process.env.RENDER === 'true'
+    ? 'postgresql://admin:tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL@dpg-d4viah24d50c73829rp0-a/octonet' // host interno Render
+    : 'postgresql://admin:tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL@dpg-d4viah24d50c73829rp0-a.virginia-postgres.render.com/octonet', // host externo para local
+  entities: [__dirname + '/**/*.entity{.ts,.js}'],
+  synchronize: true,
+  ssl: process.env.RENDER === 'true' ? undefined : { rejectUnauthorized: false },
+})
+,
     UsersModule,
     AuthModule,
     BusinessModule,
