@@ -15,7 +15,7 @@ import { ProductsModule } from './products/products.module';
     ? 'postgresql://admin:tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL@dpg-d4viah24d50c73829rp0-a/octonet' // host interno Render
     : 'postgresql://admin:tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL@dpg-d4viah24d50c73829rp0-a.virginia-postgres.render.com/octonet', // host externo para local
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  synchronize: true,
+  synchronize: false,
   ssl: process.env.RENDER === 'true' ? undefined : { rejectUnauthorized: false },
 })
 ,
