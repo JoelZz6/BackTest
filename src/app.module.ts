@@ -17,7 +17,7 @@ import { ProductsModule } from './products/products.module';
       password: '6122448Joel@6699',
       database: 'postgres',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,  // Solo para dev, no en prod
+      synchronize: false,  // Solo para dev, no en prod
     }),
     UsersModule,
     AuthModule,
