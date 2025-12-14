@@ -11,11 +11,11 @@ import { ProductsModule } from './products/products.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'db.nmqyfhhilsjzuihfwiyj.supabase.co',
+      host: 'dpg-d4viah24d50c73829rp0-a',
       port: 5432,
-      username: 'postgres',  // Del docker-compose
-      password: '6122448Joel@6699',
-      database: 'postgres',
+      username: 'admin',  // Del docker-compose
+      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
+      database: 'octonet',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,  // Solo para dev, no en prod
       ssl: { rejectUnauthorized: false },

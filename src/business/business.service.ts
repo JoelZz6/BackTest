@@ -29,10 +29,10 @@ export class BusinessService {
     // 2. Conectar a la nueva base de datos
     const businessDataSource = new DataSource({
       type: 'postgres',
-      host: 'db.nmqyfhhilsjzuihfwiyj.supabase.co',
+      host: 'dpg-d4viah24d50c73829rp0-a',
       port: 5432,
-      username: 'postgres',
-      password: '6122448Joel@6699',
+      username: 'admin',
+      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
       database: dbName,
     });
 

@@ -15,10 +15,10 @@ export class ProductsService {
   private async getBusinessDataSource(dbName: string) {
     return await new DataSource({
       type: 'postgres',
-      host: 'db.nmqyfhhilsjzuihfwiyj.supabase.co',
+      host: 'dpg-d4viah24d50c73829rp0-a',
       port: 5432,
-      username: 'postgres',     // ← Cambia por tu usuario de PostgreSQL
-      password: '6122448Joel@6699',  // ← Cambia por tu contraseña
+      username: 'admin',     // ← Cambia por tu usuario de PostgreSQL
+      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',  // ← Cambia por tu contraseña
       database: dbName,
     }).initialize();
   }
