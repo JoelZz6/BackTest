@@ -18,6 +18,7 @@ import { ProductsModule } from './products/products.module';
       database: 'postgres',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,  // Solo para dev, no en prod
+      ssl: { rejectUnauthorized: false },
     }),
     UsersModule,
     AuthModule,
