@@ -10,22 +10,19 @@ import { RegisterSaleDto } from './dto/register-sale.dto';
 export class ProductsService {
   constructor(private mainDataSource: DataSource) {}
 
-  // Conexión temporal a la DB del negocio
-  private async getBusinessDataSource(dbName: string) {
-    const isRender = process.env.RENDER === 'true';
-    const host = isRender
-      ? 'dpg-d4viah24d50c73829rp0-a' // host interno Render
-      : 'dpg-d4viah24d50c73829rp0-a.virginia-postgres.render.com'; // host externo local
-
-    return await new DataSource({
+  // Conexión temporal a la DB del negocio (Aiven)
+  private async getBusinessDataSource(dbName: string): Promise<DataSource> {
+    const ds = new DataSource({
       type: 'postgres',
-      host,
-      port: 5432,
-      username: 'admin',
-      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
+      host: process.env.AIVEN_HOST,
+      port: Number(process.env.AIVEN_PORT),
+      username: process.env.AIVEN_USER,
+      password: process.env.AIVEN_PASSWORD,
       database: dbName,
-      ssl: !isRender ? { rejectUnauthorized: false } : undefined,
-    }).initialize();
+      ssl: { rejectUnauthorized: false },
+    });
+
+    return ds.initialize();
   }
 
   async createProduct(dto: CreateProductDto, dbName: string) {

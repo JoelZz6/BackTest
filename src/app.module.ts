@@ -1,3 +1,4 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -10,15 +11,22 @@ import { ProductsModule } from './products/products.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-  type: 'postgres',
-  url: process.env.RENDER === 'true'
-    ? 'postgresql://admin:tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL@dpg-d4viah24d50c73829rp0-a/octonet' // host interno Render
-    : 'postgresql://admin:tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL@dpg-d4viah24d50c73829rp0-a.virginia-postgres.render.com/octonet', // host externo para local
-  entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  synchronize: false,
-  ssl: process.env.RENDER === 'true' ? undefined : { rejectUnauthorized: false },
-})
-,
+      type: 'postgres',
+      host: process.env.AIVEN_HOST,
+      port: Number(process.env.AIVEN_PORT),
+      username: process.env.AIVEN_USER,
+      password: process.env.AIVEN_PASSWORD,
+      database: 'defaultdb',
+
+      ssl: {
+        rejectUnauthorized: false,
+      },
+
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: false,
+      autoLoadEntities: true,
+    }),
+
     UsersModule,
     AuthModule,
     BusinessModule,

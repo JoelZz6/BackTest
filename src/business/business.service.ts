@@ -11,26 +11,29 @@ export class BusinessService {
   constructor(
     @InjectRepository(Business)
     private businessRepo: Repository<Business>,
+
     @InjectRepository(User)
     private userRepo: Repository<User>,
-    private mainDataSource: DataSource, // conexión principal
+
+    private mainDataSource: DataSource, // conexión principal (defaultdb)
   ) {}
 
-  private async getBusinessDataSource(dbName: string) {
-    const isRender = process.env.RENDER === 'true'; // Variable de entorno en Render
-    const host = isRender
-      ? 'dpg-d4viah24d50c73829rp0-a' // host interno Render
-      : 'dpg-d4viah24d50c73829rp0-a.virginia-postgres.render.com'; // host externo local
-
-    return await new DataSource({
+  // 🔌 Conexión a la DB del negocio (Aiven)
+  private async getBusinessDataSource(dbName: string): Promise<DataSource> {
+    const ds = new DataSource({
       type: 'postgres',
-      host,
-      port: 5432,
-      username: 'admin',
-      password: 'tXCA0nsb6mz2rbJcxizQCWB9FkITWdZL',
+      host: process.env.AIVEN_HOST,
+      port: Number(process.env.AIVEN_PORT),
+      username: process.env.AIVEN_USER,
+      password: process.env.AIVEN_PASSWORD,
       database: dbName,
-      ssl: !isRender ? { rejectUnauthorized: false } : undefined,
-    }).initialize();
+
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    return ds.initialize();
   }
 
   async createBusiness(dto: CreateBusinessDto, user: User) {
@@ -40,14 +43,14 @@ export class BusinessService {
 
     const dbName = `db_${user.id}`;
 
-    // 1. Crear la base de datos principal
+    // 1️⃣ Crear la base de datos del negocio
     await this.mainDataSource.query(`CREATE DATABASE "${dbName}"`);
 
-    // 2. Conectar a la nueva base de datos
+    // 2️⃣ Conectar a la nueva DB
     const ds = await this.getBusinessDataSource(dbName);
 
     try {
-      // 3. Crear tablas
+      // 3️⃣ Crear tablas
       await ds.query(`
         CREATE TABLE product (
           id SERIAL PRIMARY KEY,
@@ -59,6 +62,7 @@ export class BusinessService {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
         CREATE INDEX idx_product_name ON product(name);
         CREATE INDEX idx_product_active ON product(is_active);
 
@@ -79,20 +83,24 @@ export class BusinessService {
           notes TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
         CREATE INDEX idx_sale_product ON sale(product_id);
         CREATE INDEX idx_sale_date ON sale(created_at DESC);
       `);
 
-      console.log(`Tablas creadas exitosamente en ${dbName}`);
+      console.log(`✅ Tablas creadas en ${dbName}`);
     } catch (error) {
-      console.error('Error creando tablas:', error);
+      console.error('❌ Error creando tablas:', error);
+
+      // rollback: borrar la DB si falló
       await this.mainDataSource.query(`DROP DATABASE IF EXISTS "${dbName}"`);
+
       throw new ConflictException('Error al crear las tablas del negocio');
     } finally {
       await ds.destroy();
     }
 
-    // 4. Guardar negocio y actualizar usuario
+    // 4️⃣ Guardar negocio y actualizar usuario
     const business = this.businessRepo.create({
       name: dto.name,
       category: dto.category,
@@ -102,10 +110,14 @@ export class BusinessService {
       ownerId: user.id,
       dbName,
     });
+
     await this.businessRepo.save(business);
 
-    user.roles = [...new Set([...user.roles, UserRole.GERENTE_NEGOCIO, UserRole.EMPLEADO])];
+    user.roles = [
+      ...new Set([...user.roles, UserRole.GERENTE_NEGOCIO, UserRole.EMPLEADO]),
+    ];
     user.businessDbName = dbName;
+
     await this.userRepo.save(user);
 
     return {
@@ -123,16 +135,20 @@ export class BusinessService {
 
   async getMyBusiness(user: User) {
     if (!user.businessDbName) return null;
-    return this.businessRepo.findOne({ where: { ownerId: user.id } });
+
+    return this.businessRepo.findOne({
+      where: { ownerId: user.id },
+    });
   }
 
   async getPublicInfo(dbName: string) {
     const result = await this.mainDataSource.query(
-      `SELECT name, phone, description, category, address 
-       FROM business 
+      `SELECT name, phone, description, category, address
+       FROM business
        WHERE "dbName" = $1`,
       [dbName],
     );
+
     return result[0] || null;
   }
 }
