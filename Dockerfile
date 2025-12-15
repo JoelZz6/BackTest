@@ -5,16 +5,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package.json desde el nivel superior
-COPY ../package*.json ./
+# 1️⃣ Copiar dependencias (root del proyecto)
+COPY package*.json ./
 
-# Instalar dependencias
+# 2️⃣ Instalar dependencias
 RUN npm install
 
-# Copiar todo el código
-COPY .. .
+# 3️⃣ Copiar el resto del proyecto
+COPY . .
 
-# Compilar NestJS
+# 4️⃣ Compilar NestJS
 RUN npm run build
 
 
@@ -25,6 +25,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Copiar solo lo necesario
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
