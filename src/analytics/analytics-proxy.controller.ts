@@ -33,7 +33,7 @@ export class AnalyticsProxyController {
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 30000, // 30 segundos de timeout por si el cálculo es pesado
+            timeout: 1800000, // 30 segundos de timeout por si el cálculo es pesado
           },
         ),
       );
