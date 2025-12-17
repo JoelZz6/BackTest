@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { BusinessModule } from './business/business.module';
 import { ProductsModule } from './products/products.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     BusinessModule,
     ProductsModule,
     AnalyticsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
