@@ -18,7 +18,7 @@ import { ChatModule } from './chat/chat.module';
       port: Number(process.env.AIVEN_PORT),
       username: process.env.AIVEN_USER,
       password: process.env.AIVEN_PASSWORD,
-      database: 'defaultdb',
+      database: 'octonet',
 
       ssl: {
         rejectUnauthorized: false,
