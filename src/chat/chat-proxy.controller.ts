@@ -26,7 +26,7 @@ export class ChatProxyController {
     try {
       const lunaResponse = await firstValueFrom(
         this.httpService.post(
-          'https://asistente-virtual-py.onrender.com',  // <-- URL de tu servicio Luna IA en Render
+          'https://asistente-virtual-py.onrender.com/chat',  // <-- URL de tu servicio Luna IA en Render
           body,
           {
             headers: {
