@@ -218,6 +218,7 @@ export class ProductsService {
       SELECT "dbName", name AS business_name, phone 
       FROM business 
       WHERE "dbName" IS NOT NULL
+      AND "dbName" != ''
     `);
 
     const catalog: any[] = [];
@@ -230,19 +231,22 @@ export class ProductsService {
 
         const products = await ds.query(`
           SELECT 
-            name,
-            description,
-            market_price::text as market_price,
-            image_url
-          FROM product 
-          WHERE is_active = true
+          p.name,
+          p.description,
+          p.market_price::text as market_price,
+          p.image_url
+        FROM product p
+        LEFT JOIN lot l ON l.product_id = p.id
+        WHERE p.is_active = true
+        GROUP BY p.id
+        HAVING COALESCE(SUM(l.remaining), 0) > 0
+        ORDER BY p.name
         `);
 
         products.forEach((p: any) => {
           catalog.push({
             business_name,
             business_phone: phone,
-            business_db: dbName,
             ...p,
           });
         });
